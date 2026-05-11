@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABAP Code Reviewer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 780px; margin: 0 auto; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #e8e8e0; color: #666; margin-bottom: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  h1 { font-size: 26px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }
+  .example-link { font-size: 12px; color: #378ADD; background: none; border: none; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .card { background: white; border: 1px solid #e0e0d8; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #fafaf7; border-bottom: 1px solid #e0e0d8; }
+  .card-label { font-size: 12px; color: #888; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 500; }
+  .lang-badge { font-size: 11px; background: #ddeeff; color: #1a5fa8; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  textarea { width: 100%; min-height: 240px; padding: 16px; font-size: 13px; font-family: 'Courier New', monospace; color: #1a1a1a; background: white; border: none; outline: none; resize: vertical; line-height: 1.6; }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .option { background: white; border: 1px solid #e0e0d8; border-radius: 10px; padding: 10px 14px; cursor: pointer; transition: border-color 0.15s; }
+  .option.selected { border: 2px solid #378ADD; }
+  .option-top { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .option-desc { font-size: 12px; color: #888; padding-left: 22px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #ccc; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .option.selected .dot { background: #378ADD; border-color: #378ADD; }
+  .dot-inner { width: 6px; height: 6px; border-radius: 50%; background: white; display: none; }
+  .option.selected .dot-inner { display: block; }
+  .review-btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 500; background: #1a1a1a; color: white; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 1rem; transition: background 0.15s; }
+  .review-btn:hover { background: #333; }
+  .review-btn:disabled { background: #ccc; cursor: not-allowed; }
+  .result { background: white; border: 1px solid #e0e0d8; border-radius: 12px; overflow: hidden; display: none; }
+  .result-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fafaf7; border-bottom: 1px solid #e0e0d8; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+  .result-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+  .result-body { padding: 20px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { text-align: center; font-size: 12px; color: #bbb; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="badge">⬡ ABAP Reviewer</div>
+  <h1>ABAP Code Reviewer</h1>
+  <p class="subtitle">AI-powered · Built for SAP developers &nbsp;·&nbsp; <button class="example-link" onclick="loadExample()">load example</button></p>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-label">Your ABAP Code</span>
+      <span class="lang-badge">ABAP</span>
+    </div>
+    <textarea id="code" placeholder="Paste your ABAP code here..."></textarea>
+  </div>
+
+  <div class="options-grid">
+    <div class="option selected" onclick="toggle(this,'performance')">
+      <div class="option-top"><span class="dot"><span class="dot-inner"></span></span> Performance</div>
+      <div class="option-desc">SELECT loops, buffering, indexes</div>
+    </div>
+    <div class="option selected" onclick="toggle(this,'style')">
+      <div class="option-top"><span class="dot"><span class="dot-inner"></span></span> Code style</div>
+      <div class="option-desc">Naming, structure, best practices</div>
+    </div>
+    <div class="option selected" onclick="toggle(this,'security')">
+      <div class="option-top"><span class="dot"><span class="dot-inner"></span></span> Security</div>
+      <div class="option-desc">Injection risks, authority checks</div>
+    </div>
+    <div class="option selected" onclick="toggle(this,'modernise')">
+      <div class="option-top"><span class="dot"><span class="dot-inner"></span></span> Modernise</div>
+      <div class="option-desc">ABAP 7.4+ syntax suggestions</div>
+    </div>
+  </div>
+
+  <button class="review-btn" id="btn" onclick="review()">Review my code →</button>
+
+  <div class="result" id="result">
+    <div class="result-header">
+      <div class="status-dot" id="status-dot"></div>
+      <span class="result-label" id="result-label">Review</span>
+    </div>
+    <div class="result-body" id="result-body"></div>
+  </div>
+
+  <footer>ABAP Code Reviewer · Powered by Claude AI</footer>
+</div>
+<script>
+  const selected = new Set(['performance','style','security','modernise']);
+  function toggle(el, key) {
+    el.classList.toggle('selected');
+    selected.has(key) ? selected.delete(key) : selected.add(key);
+  }
+  function loadExample() {
+    document.getElementById('code').value = `REPORT z_sales_report.\n\nDATA: lt_mara TYPE TABLE OF mara,\n      ls_mara TYPE mara,\n      ls_marc TYPE marc.\n\nSTART-OF-SELECTION.\n  SELECT * FROM mara INTO TABLE lt_mara.\n\n  LOOP AT lt_mara INTO ls_mara.\n    SELECT SINGLE * FROM marc\n      INTO ls_marc\n      WHERE matnr = ls_mara-matnr\n        AND werks = '1000'.\n    IF sy-subrc = 0.\n      WRITE: / ls_mara-matnr, ls_marc-labst.\n    ENDIF.\n  ENDLOOP.`;
+  }
+  async function review() {
+    const code = document.getElementById('code').value.trim();
+    if (!code) return alert('Please paste some ABAP code first.');
+    if (selected.size === 0) return alert('Please select at least one focus area.');
+    const btn = document.getElementById('btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Reviewing...';
+    const result = document.getElementById('result');
+    const body = document.getElementById('result-body');
+    const dot = document.getElementById('status-dot');
+    const label = document.getElementById('result-label');
+    result.style.display = 'block';
+    dot.style.background = '#FAC775';
+    label.textContent = 'Analysing...';
+    body.textContent = '';
+    try {
+      const res = await fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, focus: [...selected].join(', ') })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      dot.style.background = '#1D9E75';
+      label.textContent = 'Review complete';
+      body.textContent = data.result;
+    } catch (err) {
+      dot.style.background = '#E24B4A';
+      label.textContent = 'Error';
+      body.textContent = 'Something went wrong:\n\n' + err.message;
+    }
+    btn.disabled = false;
+    btn.innerHTML = 'Review my code →';
+  }
+</script>
+</body>
+</html>
